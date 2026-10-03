@@ -1,0 +1,98 @@
+schema: v1
+name: Update an owner's pet that was deleted returns 404
+description: >-
+  Creates an owner with a pet, deletes the pet in setup and then sends a valid update for it through
+  the owner path. The answer is 404 with a ProblemDetail (openapi.yml:516-521). The controller
+  returns 404 without a body (OwnerRestControllerV1.java:172). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/owners/{ownerId}/pets/{petId}|state|update-after-pet-delete", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "update the deleted pet through its owner"
+    at: json.status
+data:
+  isolated: true
+  cleanup: >-
+    The pet is deleted in setup; teardown repeats that delete expecting 404, then deletes the owner
+    and the pet type created by this run. If teardown reports a failure, use the run id
+    (case.id_short in the report's residual data), in this order: DELETE /api/pets/{id} for the pet
+    named "pet-<run id>", DELETE /api/owners/{id} for the owner whose address starts with
+    "apitest-<run id>", DELETE /api/pettypes/{id} for the type named "apitest-type-<run id>".
+  resources: [pets, owners, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+    - name: "setup: add a pet to the owner"
+      request:
+        method: POST
+        path: "/api/owners/${ctx.owner_id}/pets"
+        body:
+          name: "pet-${ctx.case.id_short}"
+          birthDate: "2020-01-15"
+          type:
+            id: "${ctx.type_id}"
+            name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        pet_id: "$.id"
+    - name: "setup: delete the pet"
+      request:
+        method: DELETE
+        path: "/api/pets/${ctx.pet_id}"
+steps:
+  - name: update the deleted pet through its owner
+    request:
+      method: PUT
+      path: "/api/owners/${ctx.owner_id}/pets/${ctx.pet_id}"
+      body:
+        name: "pet-${ctx.case.id_short}"
+        birthDate: "2021-06-30"
+        type:
+          id: "${ctx.type_id}"
+          name: "apitest-type-${ctx.case.id_short}"
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the pet if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/pets/${ctx.pet_id}"
+      assert:
+        status: 404
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

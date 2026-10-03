@@ -1,0 +1,51 @@
+schema: v1
+name: A specialty update is visible when the specialty is read back
+description: >-
+  Creates a specialty, renames it and reads it back: the stored specialty must show the new name
+  (operation "Update a specialty by ID", openapi.yml:1486). The update step asserts nothing so that
+  this check does not depend on the disputed status of the update response
+  (defects/update-answers-204-instead-of-200.md).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/specialties/{specialtyId}|state|update-persists", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the specialty created by this run. If it fails, find the specialty named
+    "apitest-specialty-<case.id_short>" or "apitest-renamed-<case.id_short>" in
+    GET /api/specialties (the id is also in the report's residual data) and
+    DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+steps:
+  - name: rename the specialty
+    request:
+      method: PUT
+      path: "/api/specialties/${ctx.specialty_id}"
+      body:
+        name: "apitest-renamed-${ctx.case.id_short}"
+  - name: read the specialty back
+    request:
+      method: GET
+      path: "/api/specialties/${ctx.specialty_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.specialty_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"

@@ -1,0 +1,69 @@
+schema: v1
+name: Update an owner that was deleted returns 404
+description: >-
+  Creates an owner, deletes it in setup and then sends a valid update for its id. The answer is 404
+  with a ProblemDetail (openapi.yml:296-301). The controller returns 404 without a body
+  (OwnerRestControllerV1.java:115-117). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/owners/{ownerId}|state|update-after-delete", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "update the deleted owner"
+    at: json.status
+data:
+  isolated: true
+  cleanup: >-
+    The owner created by this run is deleted in setup; teardown repeats the delete and expects 404,
+    which also catches an update that recreated the record. If teardown reports a failure, find the
+    owner whose address starts with "apitest-<case.id_short>" in GET /api/owners and
+    DELETE /api/owners/{id}.
+  resources: [owners]
+setup:
+  steps:
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+    - name: "setup: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+steps:
+  - name: update the deleted owner
+    request:
+      method: PUT
+      path: "/api/owners/${ctx.owner_id}"
+      body:
+        firstName: Updated
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+        city: Testville
+        telephone: "6085550100"
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the owner if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+      assert:
+        status: 404

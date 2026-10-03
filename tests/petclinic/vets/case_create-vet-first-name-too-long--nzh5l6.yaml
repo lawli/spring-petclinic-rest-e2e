@@ -1,0 +1,31 @@
+schema: v1
+name: Create a vet with a 31-letter first name is rejected
+description: >-
+  A vet's firstName allows at most 30 characters (openapi.yml:2222). 31 letters is one past the
+  boundary, so the answer is 400 with a ProblemDetail (openapi.yml:1662-1667). Read-only by
+  contract: the body is rejected before the handler runs, and vets.first_name holds at most 30
+  characters (schema.sql:3). If a 2xx comes back, the response body holds the id to remove with
+  DELETE /api/vets/{id}.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/vets|validation|first-name-over-max-length", variant: default}
+mutates: false
+steps:
+  - name: post a vet whose first name has 31 letters
+    request:
+      method: POST
+      path: /api/vets
+      body:
+        firstName: "${'A' * 31}"
+        lastName: "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+        specialties: []
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

@@ -1,0 +1,51 @@
+schema: v1
+name: Update a specialty returns the updated specialty
+description: >-
+  Creates a specialty and renames it. The contract documents 200 with the updated Specialty in the
+  body (openapi.yml:1506-1516). The controller answers 204 without a body
+  (SpecialtyRestControllerV1.java:93). Known defect, reproduced:
+  defects/update-answers-204-instead-of-200.md. The read-only id is left out of the request body.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/specialties/{specialtyId}|happy|update-specialty", variant: default}
+known_defects:
+  - ref: defects/update-answers-204-instead-of-200.md
+    step: "rename the specialty"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the specialty created by this run. If it fails, find the specialty named
+    "apitest-specialty-<case.id_short>" or "apitest-renamed-<case.id_short>" in
+    GET /api/specialties (the id is also in the report's residual data) and
+    DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+steps:
+  - name: rename the specialty
+    request:
+      method: PUT
+      path: "/api/specialties/${ctx.specialty_id}"
+      body:
+        name: "apitest-renamed-${ctx.case.id_short}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.specialty_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"

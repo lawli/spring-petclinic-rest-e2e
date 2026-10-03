@@ -1,0 +1,28 @@
+schema: v1
+name: Create a pet type without a name is rejected
+description: >-
+  name is the one required field of PetTypeFields (openapi.yml:2320-2321). An empty object must be
+  answered with 400 and a ProblemDetail listing a schema validation error (openapi.yml:652-657).
+  Read-only by contract: the body is rejected before the handler runs, and a type without a name
+  cannot be stored because types.name is NOT NULL (schema.sql:26). If a 2xx comes back, the
+  response body holds the id to remove with DELETE /api/pettypes/{id}.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/pettypes|validation|name-missing", variant: default}
+mutates: false
+steps:
+  - name: post a pet type without a name
+    request:
+      method: POST
+      path: /api/pettypes
+      body: {}
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

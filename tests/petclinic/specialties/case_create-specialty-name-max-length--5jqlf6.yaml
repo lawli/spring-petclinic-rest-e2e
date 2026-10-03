@@ -1,0 +1,48 @@
+schema: v1
+name: Create a specialty with an 80-character name
+description: >-
+  A specialty name allows at most 80 characters (openapi.yml:1985). A name of exactly 80 characters
+  (the run marker padded with "x") is on the boundary and must be stored unchanged. The create step
+  checks the returned Specialty but not the status, because the status of a successful create is
+  disputed separately (defects/create-answers-201-instead-of-200.md); the specialty is then read
+  back by id. Teardown deletes by the run's name marker, whether or not the create stored it.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/specialties|boundary|name-max-length-80", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown lists the specialties and deletes each one whose name starts with
+    "apitest-specialty-<case.id_short>". If it fails, do the same by hand: GET /api/specialties,
+    then DELETE /api/specialties/{id} for every match.
+  resources: [specialties]
+steps:
+  - name: create a specialty whose name has 80 characters
+    request:
+      method: POST
+      path: /api/specialties
+      body:
+        name: "apitest-specialty-${ctx.case.id_short}${'x' * 50}"
+    extract:
+      specialty_id: "$.id"
+    assert:
+      json:
+        id: "@number >= 0"
+        name: "apitest-specialty-${ctx.case.id_short}${'x' * 50}"
+  - name: read the specialty back
+    request:
+      method: GET
+      path: "/api/specialties/${ctx.specialty_id}"
+    assert:
+      status: 200
+      json:
+        name: "apitest-specialty-${ctx.case.id_short}${'x' * 50}"
+teardown:
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: specialties
+        field: name
+        prefix: "apitest-specialty-{run}"

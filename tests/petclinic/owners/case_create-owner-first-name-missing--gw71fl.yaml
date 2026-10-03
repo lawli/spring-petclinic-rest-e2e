@@ -1,0 +1,32 @@
+schema: v1
+name: Create an owner without a first name is rejected
+description: >-
+  firstName is required (openapi.yml:2034-2035). The body omits it, so the answer is 400 with a
+  ProblemDetail that lists at least one schema validation error. Read-only by contract: bean
+  validation generated from the schema rejects the body before the handler runs, so nothing is
+  stored. If a 2xx comes back, the response body holds the id to remove with
+  DELETE /api/owners/{id}.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/owners|validation|first-name-missing", variant: default}
+mutates: false
+steps:
+  - name: post an owner without firstName
+    request:
+      method: POST
+      path: /api/owners
+      body:
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+        city: Testville
+        telephone: "6085550100"
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

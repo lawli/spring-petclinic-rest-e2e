@@ -1,0 +1,78 @@
+service: petclinic
+method: DELETE
+path: /api/pettypes/{petTypeId}
+conditions: []
+evidence:
+  - {file: src/main/resources/openapi.yml, line: 784, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+    line: 39, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+    line: 96, kind: implementation}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|DELETE|/api/pettypes/{petTypeId}|happy|delete-pet-type
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 801, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 811, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 102, kind: implementation}
+  - key: petclinic|DELETE|/api/pettypes/{petTypeId}|idempotency|delete-twice
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 825, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 99, kind: implementation}
+  - key: petclinic|DELETE|/api/pettypes/{petTypeId}|state|delete-type-removes-its-pets
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/db/h2/schema.sql, line: 49, kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetTypeRepositoryImpl.java,
+        line: 45, kind: implementation}
+  - key: petclinic|DELETE|/api/pettypes/{petTypeId}|validation|negative-id
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 798, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 819, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 80,
+        kind: implementation}
+  - key: petclinic|DELETE|/api/pettypes/{petTypeId}|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}
+  - key: petclinic|DELETE|/api/pettypes/{petTypeId}|auth|missing-role-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 93, kind: declarative}
+      - {file: readme.md, line: 231, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}

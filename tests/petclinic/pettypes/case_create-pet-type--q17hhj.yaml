@@ -1,0 +1,43 @@
+schema: v1
+name: Create a pet type returns the stored type
+description: >-
+  Posts a PetTypeFields body. The contract documents 200 with the stored PetType
+  (openapi.yml:634-644): generated id and the submitted name. The controller answers 201
+  (PetTypeRestControllerV1.java:78). Known defect, reproduced:
+  defects/create-answers-201-instead-of-200.md. Teardown does not rely on an id from the response:
+  a helper deletes the pet type that carries this run's name, whether or not the create stored it.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/pettypes|happy|create-pet-type", variant: default}
+known_defects:
+  - ref: defects/create-answers-201-instead-of-200.md
+    step: "create the pet type"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown lists the pet types and deletes each one whose name starts with
+    "apitest-type-<case.id_short>". If it fails, do the same by hand: GET /api/pettypes, then
+    DELETE /api/pettypes/{id} for every match.
+  resources: [pettypes]
+steps:
+  - name: create the pet type
+    request:
+      method: POST
+      path: /api/pettypes
+      body:
+        name: "apitest-type-${ctx.case.id_short}"
+    assert:
+      status: 200
+      json:
+        id: "@number >= 0"
+        name: "apitest-type-${ctx.case.id_short}"
+teardown:
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: pettypes
+        field: name
+        prefix: "apitest-type-{run}"

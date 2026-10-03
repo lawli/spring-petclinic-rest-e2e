@@ -1,0 +1,23 @@
+schema: v1
+name: The Swagger UI page is served as HTML
+description: >-
+  Pending expectation, read-only. The root controller redirects to /swagger-ui/index.html
+  (RootRestControllerV1.java:43) and the readme says a Swagger UI is available (readme.md:42), but
+  nothing in the repository describes the response of this path. This case records the expected
+  answer of the springdoc dependency: 200 with an HTML page that refers to "swagger-ui". It needs a
+  documented statement of what this path serves.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/swagger-ui/index.html|happy|serves-swagger-ui-page", variant: default}
+expectation: pending
+steps:
+  - name: get the Swagger UI page
+    request:
+      method: GET
+      path: /swagger-ui/index.html
+    assert:
+      status: 200
+      headers:
+        Content-Type: "@contains text/html"
+      text: "@contains swagger-ui"

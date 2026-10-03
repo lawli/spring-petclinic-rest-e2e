@@ -1,0 +1,92 @@
+schema: v1
+name: Add a visit with an empty description is rejected
+description: >-
+  A visit description needs at least one character (openapi.yml:2278). An empty string must be
+  answered with 400 and a ProblemDetail listing a schema validation error (openapi.yml:568-573),
+  and the pet must still have no visits.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|validation|description-empty", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet (a visit stored against the contract would go with it), then the owner,
+    then the pet type, all created by this run. If it fails, use the run id (case.id_short in the
+    report's residual data), in this order: DELETE /api/pets/{id} for the pet named "pet-<run id>",
+    DELETE /api/owners/{id} for the owner whose address starts with "apitest-<run id>",
+    DELETE /api/pettypes/{id} for the type named "apitest-type-<run id>".
+  resources: [visits, pets, owners, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+    - name: "setup: add a pet to the owner"
+      request:
+        method: POST
+        path: "/api/owners/${ctx.owner_id}/pets"
+        body:
+          name: "pet-${ctx.case.id_short}"
+          birthDate: "2020-01-15"
+          type:
+            id: "${ctx.type_id}"
+            name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        pet_id: "$.id"
+steps:
+  - name: add a visit with an empty description
+    request:
+      method: POST
+      path: "/api/owners/${ctx.owner_id}/pets/${ctx.pet_id}/visits"
+      body:
+        date: "2024-03-10"
+        description: ""
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"
+  - name: the pet still has no visits
+    request:
+      method: GET
+      path: "/api/pets/${ctx.pet_id}"
+    assert:
+      status: 200
+      json:
+        visits: []
+teardown:
+  steps:
+    - name: "teardown: delete the pet"
+      request:
+        method: DELETE
+        path: "/api/pets/${ctx.pet_id}"
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

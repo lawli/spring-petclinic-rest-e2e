@@ -1,0 +1,30 @@
+schema: v1
+name: Get a vet with a non-numeric id is a bad request
+description: >-
+  Read-only. vetId is declared as an integer (openapi.yml:1693) and the operation documents 400
+  with a ProblemDetail (openapi.yml:1716-1721), so "abc" must be answered with 400. A type mismatch
+  is not request-body validation, so it reaches the catch-all handler that answers 500
+  (ExceptionControllerAdvice.java:80). Known defect, reproduced:
+  defects/invalid-request-values-not-answered-with-400.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/vets/{vetId}|validation|non-numeric-id", variant: default}
+known_defects:
+  - ref: defects/invalid-request-values-not-answered-with-400.md
+    step: "get vet \"abc\""
+    at: status
+steps:
+  - name: get vet "abc"
+    request:
+      method: GET
+      path: /api/vets/abc
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"

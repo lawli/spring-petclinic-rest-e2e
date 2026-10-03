@@ -1,0 +1,33 @@
+service: petclinic
+method: GET
+path: /swagger-ui/index.html
+conditions: []
+evidence:
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/RootRestControllerV1.java, line: 43,
+    kind: implementation}
+  - {file: pom.xml, line: 160, kind: route}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|GET|/swagger-ui/index.html|happy|serves-swagger-ui-page
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: pending
+    evidence:
+      - {file: readme.md, line: 42, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/RootRestControllerV1.java,
+        line: 43, kind: implementation}
+  - key: petclinic|GET|/swagger-ui/index.html|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}

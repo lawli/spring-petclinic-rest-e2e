@@ -1,0 +1,25 @@
+schema: v1
+name: Owner page for a last name nobody has is an empty page
+description: >-
+  Read-only. Requests the owner page for a run-unique last name that no owner carries. The
+  operation documents 200 with an OwnerPage and no 404 (openapi.yml:176-205), so the answer is a
+  page with no content, 0 total elements and 0 total pages, with the default page 0 and size 20.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/v2/owners|error|filter-no-match", variant: default}
+steps:
+  - name: get the owner page for a last name that does not exist
+    request:
+      method: GET
+      path: /api/v2/owners
+      params:
+        lastName: "Zz${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+    assert:
+      status: 200
+      json:
+        page: 0
+        size: 20
+        content: []
+        totalElements: 0
+        totalPages: 0

@@ -1,0 +1,32 @@
+schema: v1
+name: Create an owner with an empty address is rejected
+description: >-
+  address needs at least one character (openapi.yml:2016). An empty string breaks minLength, so the
+  answer is 400 with a ProblemDetail. Read-only by contract: the body is rejected before the
+  handler runs. If a 2xx comes back, the response body holds the id to remove with
+  DELETE /api/owners/{id}.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/owners|validation|address-empty", variant: default}
+mutates: false
+steps:
+  - name: post an owner with an empty address
+    request:
+      method: POST
+      path: /api/owners
+      body:
+        firstName: Apitest
+        lastName: Owner
+        address: ""
+        city: Testville
+        telephone: "6085550100"
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

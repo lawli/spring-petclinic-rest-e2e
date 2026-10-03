@@ -1,0 +1,29 @@
+schema: v1
+name: Create a specialty with an 81-character name is rejected
+description: >-
+  A specialty name allows at most 80 characters (openapi.yml:1985). 81 characters is one past the
+  boundary, so the answer is 400 with a ProblemDetail (openapi.yml:1410-1415). Read-only by
+  contract: the body is rejected before the handler runs. If a 2xx comes back, the response body
+  holds the id to remove with DELETE /api/specialties/{id}; the name starts with
+  "apitest-specialty-<case.id_short>".
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/specialties|validation|name-over-max-length", variant: default}
+mutates: false
+steps:
+  - name: post a specialty whose name has 81 characters
+    request:
+      method: POST
+      path: /api/specialties
+      body:
+        name: "apitest-specialty-${ctx.case.id_short}${'x' * 51}"
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

@@ -1,0 +1,30 @@
+schema: v1
+name: Get an owner's pet with a negative owner id is a bad request
+description: >-
+  Read-only. ownerId has minimum 0 (openapi.yml:426) and the operation documents 400 with a
+  ProblemDetail (openapi.yml:456-461), so owner -1 must be answered with 400 whatever the pet id.
+  The exception handler maps only request-body validation to 400
+  (ExceptionControllerAdvice.java:117, 80). Known defect, reproduced:
+  defects/invalid-request-values-not-answered-with-400.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/owners/{ownerId}/pets/{petId}|validation|negative-owner-id", variant: default}
+known_defects:
+  - ref: defects/invalid-request-values-not-answered-with-400.md
+    step: "get pet 0 of owner -1"
+    at: status
+steps:
+  - name: get pet 0 of owner -1
+    request:
+      method: GET
+      path: /api/owners/-1/pets/0
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"

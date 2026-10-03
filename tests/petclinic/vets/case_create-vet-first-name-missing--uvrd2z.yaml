@@ -1,0 +1,30 @@
+schema: v1
+name: Create a vet without a first name is rejected
+description: >-
+  firstName is required for a vet (openapi.yml:2239-2240). A body without it must be answered with
+  400 and a ProblemDetail listing a schema validation error (openapi.yml:1662-1667). Read-only by
+  contract: the body is rejected before the handler runs, and a vet without a first name cannot be
+  stored because vets.first_name is NOT NULL (schema.sql:3). If a 2xx comes back, the response body
+  holds the id to remove with DELETE /api/vets/{id}.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/vets|validation|first-name-missing", variant: default}
+mutates: false
+steps:
+  - name: post a vet without firstName
+    request:
+      method: POST
+      path: /api/vets
+      body:
+        lastName: "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+        specialties: []
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

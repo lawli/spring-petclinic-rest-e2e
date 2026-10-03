@@ -1,0 +1,4 @@
+services:
+  petclinic:
+    base_url: ${LOCAL_PETCLINIC_URL}
+environment: non-production

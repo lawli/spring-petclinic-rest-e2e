@@ -1,0 +1,30 @@
+schema: v1
+name: Get pet type 0 is valid but not found
+description: >-
+  Read-only. petTypeId has minimum 0 (openapi.yml:685), so 0 passes parameter validation; no pet
+  type can have it because ids are generated identities starting at 1. The answer is 404 with a
+  ProblemDetail (openapi.yml:712-717). The controller returns 404 without a body
+  (PetTypeRestControllerV1.java:65-67). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/pettypes/{petTypeId}|boundary|id-zero-not-found", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "get pet type 0"
+    at: json.status
+steps:
+  - name: get pet type 0
+    request:
+      method: GET
+      path: /api/pettypes/0
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"

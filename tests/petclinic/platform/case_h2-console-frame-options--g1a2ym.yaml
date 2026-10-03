@@ -1,0 +1,23 @@
+schema: v1
+name: The H2 console is served with same-origin frame options
+description: >-
+  Pending expectation, read-only. With security disabled the service relaxes the frame-options
+  header to "sameOrigin" so that the H2 console can render in frames
+  (DisableSecurityConfig.java:27-29); the console itself is enabled under the h2 profile
+  (application-h2.properties:15-16). No document describes this header, so the case records the
+  implemented answer: the console path responds with X-Frame-Options SAMEORIGIN. The status is not
+  asserted, because nothing in the repository says whether the path serves the page or redirects.
+  It needs a documented statement of the console's HTTP behavior.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/h2-console|happy|frame-options-same-origin", variant: default}
+expectation: pending
+steps:
+  - name: get the H2 console path
+    request:
+      method: GET
+      path: /h2-console
+    assert:
+      headers:
+        X-Frame-Options: SAMEORIGIN

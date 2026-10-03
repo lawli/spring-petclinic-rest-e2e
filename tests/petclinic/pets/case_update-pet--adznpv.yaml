@@ -1,0 +1,92 @@
+schema: v1
+name: Update a pet returns the updated pet
+description: >-
+  Creates an owner with a pet and replaces the pet's name and birth date. The contract documents
+  200 with the updated Pet in the body (openapi.yml:1004-1014). The controller answers 204 without
+  a body (PetRestControllerV1.java:84). Known defect, reproduced:
+  defects/update-answers-204-instead-of-200.md. The read-only Pet fields id, ownerId and visits are
+  left out of the request body.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/pets/{petId}|happy|update-pet", variant: default}
+known_defects:
+  - ref: defects/update-answers-204-instead-of-200.md
+    step: "update the pet"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet, then its owner, then the pet type, all created by this run. If it
+    fails, use the run id (case.id_short in the report's residual data), in this order:
+    DELETE /api/pets/{id} for the pet named "pet-<run id>" or "renamed-<run id>",
+    DELETE /api/owners/{id} for the owner whose address starts with "apitest-<run id>",
+    DELETE /api/pettypes/{id} for the type named "apitest-type-<run id>".
+  resources: [pets, owners, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+    - name: "setup: add a pet to the owner"
+      request:
+        method: POST
+        path: "/api/owners/${ctx.owner_id}/pets"
+        body:
+          name: "pet-${ctx.case.id_short}"
+          birthDate: "2020-01-15"
+          type:
+            id: "${ctx.type_id}"
+            name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        pet_id: "$.id"
+steps:
+  - name: update the pet
+    request:
+      method: PUT
+      path: "/api/pets/${ctx.pet_id}"
+      body:
+        name: "renamed-${ctx.case.id_short}"
+        birthDate: "2021-06-30"
+        type:
+          id: "${ctx.type_id}"
+          name: "apitest-type-${ctx.case.id_short}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.pet_id}"
+        name: "renamed-${ctx.case.id_short}"
+        birthDate: "2021-06-30"
+        type.id: "${ctx.type_id}"
+        visits: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the pet"
+      request:
+        method: DELETE
+        path: "/api/pets/${ctx.pet_id}"
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

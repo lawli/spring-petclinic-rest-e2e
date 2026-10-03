@@ -1,0 +1,61 @@
+schema: v1
+name: Update a vet with an empty first name is rejected and changes nothing
+description: >-
+  A vet's firstName needs at least one character (openapi.yml:2221). An update with an empty first
+  name must be answered with 400 and a ProblemDetail listing a schema validation error
+  (openapi.yml:1776-1781), and the stored vet must keep its first name.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/vets/{vetId}|validation|first-name-empty", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the vet created by this run. If it fails, find the vet whose last name is
+    "Vet" plus the run id with digits mapped to letters (0-9 -> g-p) in GET /api/vets (the id is
+    also in the report's residual data) and DELETE /api/vets/{id}.
+  resources: [vets]
+setup:
+  steps:
+    - name: "setup: create a vet owned by this run"
+      request:
+        method: POST
+        path: /api/vets
+        body:
+          firstName: Apitest
+          lastName: &last "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+          specialties: []
+      extract:
+        vet_id: "$.id"
+steps:
+  - name: update the vet with an empty first name
+    request:
+      method: PUT
+      path: "/api/vets/${ctx.vet_id}"
+      body:
+        firstName: ""
+        lastName: *last
+        specialties: []
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"
+  - name: the vet keeps its first name
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        firstName: Apitest
+teardown:
+  steps:
+    - name: "teardown: delete the vet"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"

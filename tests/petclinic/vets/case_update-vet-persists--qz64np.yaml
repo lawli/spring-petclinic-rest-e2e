@@ -1,0 +1,72 @@
+schema: v1
+name: A vet update is visible when the vet is read back
+description: >-
+  Creates a specialty and a vet without specialties, then updates the vet's first name and gives
+  it the specialty. Reading the vet back must show the new first name and the specialty (operation
+  "Update a vet by ID", openapi.yml:1738). The update step asserts nothing so that this check does
+  not depend on the disputed status of the update response
+  (defects/update-answers-204-instead-of-200.md).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/vets/{vetId}|state|update-persists", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the vet, then the specialty, both created by this run. If it fails, use the
+    run id (case.id_short in the report's residual data): DELETE /api/vets/{id} for the vet whose
+    last name is "Vet" plus the run id with digits mapped to letters (0-9 -> g-p), then
+    DELETE /api/specialties/{id} for the specialty named "apitest-specialty-<run id>".
+  resources: [vets, specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+    - name: "setup: create a vet without specialties"
+      request:
+        method: POST
+        path: /api/vets
+        body:
+          firstName: Apitest
+          lastName: &last "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+          specialties: []
+      extract:
+        vet_id: "$.id"
+steps:
+  - name: update the vet's first name and specialties
+    request:
+      method: PUT
+      path: "/api/vets/${ctx.vet_id}"
+      body:
+        firstName: Updated
+        lastName: *last
+        specialties:
+          - name: "apitest-specialty-${ctx.case.id_short}"
+  - name: read the vet back
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.vet_id}"
+        firstName: Updated
+        lastName: *last
+        specialties: "@len 1"
+        specialties.0.id: "${ctx.specialty_id}"
+teardown:
+  steps:
+    - name: "teardown: delete the vet"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"

@@ -1,0 +1,56 @@
+schema: v1
+name: Delete an owner returns the deleted owner
+description: >-
+  Creates an owner and deletes it. The contract documents 200 with the Owner in the body
+  (openapi.yml:326-336). The controller answers 204 without a body
+  (OwnerRestControllerV1.java:136). Known defect, reproduced:
+  defects/delete-answers-204-instead-of-200.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|DELETE|/api/owners/{ownerId}|happy|delete-owner", variant: default}
+known_defects:
+  - ref: defects/delete-answers-204-instead-of-200.md
+    step: "delete the owner"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    The case itself deletes the owner created by this run; teardown repeats the delete and expects
+    404. If teardown reports a failure, find the owner whose address starts with
+    "apitest-<case.id_short>" in GET /api/owners and DELETE /api/owners/{id}.
+  resources: [owners]
+setup:
+  steps:
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+steps:
+  - name: delete the owner
+    request:
+      method: DELETE
+      path: "/api/owners/${ctx.owner_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.owner_id}"
+        firstName: Apitest
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+teardown:
+  steps:
+    - name: "teardown: delete the owner if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+      assert:
+        status: 404

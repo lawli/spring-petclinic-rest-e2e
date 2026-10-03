@@ -1,0 +1,28 @@
+schema: v1
+name: Pet page beyond the last page is empty
+description: >-
+  Pending expectation, read-only. The contract defines page as a zero-based index with minimum 0
+  (openapi.yml:880-889) and does not say what a page past the end returns. The controller passes
+  the index straight to the repository (PetRestControllerV2.java:36-37), which yields an empty
+  page. This case records that implemented answer for page 1000000 with size 1, which assumes the
+  environment holds fewer than a million pets; it needs a contract statement (empty page, or an
+  error).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/v2/pets|boundary|page-beyond-last", variant: default}
+expectation: pending
+steps:
+  - name: get pet page 1000000 with size 1
+    request:
+      method: GET
+      path: /api/v2/pets
+      params:
+        page: 1000000
+        size: 1
+    assert:
+      status: 200
+      json:
+        page: 1000000
+        size: 1
+        content: []

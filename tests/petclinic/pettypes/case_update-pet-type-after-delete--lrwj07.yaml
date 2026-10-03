@@ -1,0 +1,62 @@
+schema: v1
+name: Update a pet type that was deleted returns 404
+description: >-
+  Creates a pet type, deletes it in setup and then sends a valid update for its id. The answer is
+  404 with a ProblemDetail (openapi.yml:772-777). The controller returns 404 without a body
+  (PetTypeRestControllerV1.java:85-87). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/pettypes/{petTypeId}|state|update-after-delete", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "update the deleted pet type"
+    at: json.status
+data:
+  isolated: true
+  cleanup: >-
+    The pet type created by this run is deleted in setup; teardown repeats the delete and expects
+    404, which also catches an update that recreated the record. If teardown reports a failure,
+    find the type named "apitest-type-<case.id_short>" or "apitest-renamed-<case.id_short>" in
+    GET /api/pettypes and DELETE /api/pettypes/{id}.
+  resources: [pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"
+steps:
+  - name: update the deleted pet type
+    request:
+      method: PUT
+      path: "/api/pettypes/${ctx.type_id}"
+      body:
+        id: "${ctx.type_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the pet type if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"
+      assert:
+        status: 404

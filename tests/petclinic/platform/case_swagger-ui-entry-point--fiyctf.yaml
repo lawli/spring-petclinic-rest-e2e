@@ -1,0 +1,21 @@
+schema: v1
+name: The documented Swagger UI address leads to the UI page
+description: >-
+  Pending expectation, read-only. The readme says the Swagger UI is available at /swagger-ui.html
+  (readme.md:42) without saying whether that address serves the page or redirects to it. This case
+  records the answer the springdoc dependency (pom.xml:160) is expected to give: a 302 to
+  "/swagger-ui/index.html". It needs a documented statement of the response at that address.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/swagger-ui.html|happy|swagger-ui-entry-point", variant: default}
+expectation: pending
+steps:
+  - name: get the documented Swagger UI address without following redirects
+    request:
+      method: GET
+      path: /swagger-ui.html
+    assert:
+      status: 302
+      headers:
+        Location: '@regex /\/swagger-ui\/index\.html$/'

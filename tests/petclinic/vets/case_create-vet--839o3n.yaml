@@ -1,0 +1,49 @@
+schema: v1
+name: Create a vet without specialties returns the stored vet
+description: >-
+  Posts a Vet body with an empty specialties list; the read-only id is left out. The contract
+  documents 200 with the stored Vet (openapi.yml:1644-1654): generated id, the submitted names and
+  an empty specialties array. The controller answers 201 (VetRestControllerV1.java:87). Known
+  defect, reproduced: defects/create-answers-201-instead-of-200.md. Teardown does not rely
+  on an id from the response: a helper deletes the vet that carries this run's last name, whether
+  or not the create stored it. Vet names must match the contract's letters-only pattern, so the
+  hex run id is mapped to letters (0-9 become g-p).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/vets|happy|create-vet-without-specialties", variant: default}
+known_defects:
+  - ref: defects/create-answers-201-instead-of-200.md
+    step: "create the vet"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown lists the vets and deletes each one whose last name starts with "Vet" plus the run id
+    with digits mapped to letters (0-9 -> g-p). If it fails, do the same by hand: GET /api/vets,
+    then DELETE /api/vets/{id} for every match.
+  resources: [vets]
+steps:
+  - name: create the vet
+    request:
+      method: POST
+      path: /api/vets
+      body:
+        firstName: Apitest
+        lastName: &last "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+        specialties: []
+    assert:
+      status: 200
+      json:
+        id: "@number >= 0"
+        firstName: Apitest
+        lastName: *last
+        specialties: []
+teardown:
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: vets
+        field: lastName
+        prefix: "Vet{run_letters}"

@@ -1,0 +1,23 @@
+schema: v1
+name: The API documentation route serves an OpenAPI 3.1 document of the API
+description: >-
+  Read-only. The readme states that the API documentation (OAS 3.1) is accessible at /v3/api-docs
+  (readme.md:44) and lists GET /api/owners among the API's endpoints (readme.md:52). The answer
+  must be 200 with a document whose openapi version starts with 3.1 and whose paths include that
+  operation.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/v3/api-docs|happy|serves-openapi-document", variant: default}
+steps:
+  - name: get the API documentation
+    request:
+      method: GET
+      path: /v3/api-docs
+    assert:
+      status: 200
+      json:
+        openapi: '@regex /^3\.1/'
+        info.title: "@type string"
+        paths: "@type object"
+        "paths./api/owners.get": "@type object"

@@ -1,0 +1,58 @@
+schema: v1
+name: Create an owner and read it back
+description: >-
+  Posts a valid OwnerFields body, expects 201 with the stored Owner (openapi.yml:80-85), including
+  the generated id and an empty pets array, then reads the owner back by id.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/owners|happy|create-owner", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the owner created by this run. If it fails, find the owner whose address starts
+    with "apitest-<case.id_short>" in GET /api/owners (the id is also in the report's residual data)
+    and DELETE /api/owners/{id}.
+  resources: [owners]
+steps:
+  - name: create the owner
+    request:
+      method: POST
+      path: /api/owners
+      body:
+        firstName: Apitest
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+        city: Testville
+        telephone: "6085550100"
+    extract:
+      owner_id: "$.id"
+    assert:
+      status: 201
+      json:
+        id: "@number >= 0"
+        firstName: Apitest
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+        city: Testville
+        telephone: "6085550100"
+        pets: []
+  - name: read the owner back
+    request:
+      method: GET
+      path: "/api/owners/${ctx.owner_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.owner_id}"
+        firstName: Apitest
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+        city: Testville
+        telephone: "6085550100"
+teardown:
+  steps:
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"

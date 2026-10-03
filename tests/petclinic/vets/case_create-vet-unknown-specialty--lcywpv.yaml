@@ -1,0 +1,61 @@
+schema: v1
+name: Create a vet naming a specialty that does not exist
+description: >-
+  Pending expectation. The contract lets a vet carry a list of specialties (openapi.yml:2233-2238)
+  and does not say what happens when a listed specialty does not exist. The controller looks the
+  listed names up and keeps only the ones it finds (VetRestControllerV1.java:81-84), so an unknown
+  name is dropped without an error. This case records that implemented answer: the vet is stored
+  with no specialties. It needs a contract statement (drop silently, reject, or create the
+  specialty).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/vets|boundary|unknown-specialty-name", variant: default}
+expectation: pending
+data:
+  isolated: true
+  cleanup: >-
+    Teardown lists the vets and deletes each one whose last name starts with "Vet" plus the run id
+    with digits mapped to letters (0-9 -> g-p). If it fails, do the same by hand: GET /api/vets,
+    then DELETE /api/vets/{id} for every match. If the service created a specialty named
+    "apitest-missing-<case.id_short>", DELETE /api/specialties/{id} for it as well.
+  resources: [vets]
+steps:
+  - name: create a vet with a specialty name nobody has defined
+    request:
+      method: POST
+      path: /api/vets
+      body:
+        firstName: Apitest
+        lastName: &last "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+        specialties:
+          - name: "apitest-missing-${ctx.case.id_short}"
+    extract:
+      vet_id: "$.id"
+    assert:
+      json:
+        id: "@number >= 0"
+        lastName: *last
+        specialties: []
+  - name: read the vet back
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        specialties: []
+teardown:
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: vets
+        field: lastName
+        prefix: "Vet{run_letters}"
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: specialties
+        field: name
+        prefix: "apitest-missing-{run}"

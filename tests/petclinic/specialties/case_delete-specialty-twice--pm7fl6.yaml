@@ -1,0 +1,58 @@
+schema: v1
+name: Deleting a specialty a second time returns 404
+description: >-
+  Creates a specialty, deletes it in setup and deletes it again. The second delete finds nothing
+  and must be answered with 404 and a ProblemDetail (openapi.yml:1583-1588). The controller returns
+  404 without a body (SpecialtyRestControllerV1.java:101-103). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|DELETE|/api/specialties/{specialtyId}|idempotency|delete-twice", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "delete the specialty again"
+    at: json.status
+data:
+  isolated: true
+  cleanup: >-
+    The specialty created by this run is deleted in setup; teardown repeats the delete and expects
+    404. If teardown reports a failure, find the specialty named
+    "apitest-specialty-<case.id_short>" in GET /api/specialties and DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+    - name: "setup: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"
+steps:
+  - name: delete the specialty again
+    request:
+      method: DELETE
+      path: "/api/specialties/${ctx.specialty_id}"
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"
+      assert:
+        status: 404

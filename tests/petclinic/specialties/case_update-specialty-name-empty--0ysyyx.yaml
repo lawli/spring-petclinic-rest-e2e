@@ -1,0 +1,57 @@
+schema: v1
+name: Update a specialty with an empty name is rejected and changes nothing
+description: >-
+  A specialty name needs at least one character (openapi.yml:1986). An update with an empty name
+  must be answered with 400 and a ProblemDetail listing a schema validation error
+  (openapi.yml:1524-1529), and the stored specialty must keep its name.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/specialties/{specialtyId}|validation|name-empty", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the specialty created by this run. If it fails, find the specialty named
+    "apitest-specialty-<case.id_short>" in GET /api/specialties (the id is also in the report's
+    residual data) and DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+steps:
+  - name: update the specialty with an empty name
+    request:
+      method: PUT
+      path: "/api/specialties/${ctx.specialty_id}"
+      body:
+        name: ""
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"
+  - name: the specialty keeps its name
+    request:
+      method: GET
+      path: "/api/specialties/${ctx.specialty_id}"
+    assert:
+      status: 200
+      json:
+        name: "apitest-specialty-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"

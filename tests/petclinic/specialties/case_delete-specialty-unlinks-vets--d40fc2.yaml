@@ -1,0 +1,82 @@
+schema: v1
+name: Deleting a specialty removes it from the vets that had it
+description: >-
+  Creates a specialty and a vet with that specialty, deletes the specialty and checks that the vet
+  still exists and no longer lists it. The link is declared to follow the specialty: the foreign
+  key of vet_specialties cascades on delete (schema.sql:20), and the repository removes the links
+  explicitly (SpringDataSpecialtyRepositoryImpl.java:40). The delete step asserts nothing because
+  its documented status is disputed separately. Both records are created for this run; seed vets
+  and specialties are not touched. Teardown deletes the vet by id and removes the specialty through
+  a helper that deletes it only if it is still there. Vet names must match the contract's
+  letters-only pattern, so the hex run id is mapped to letters (0-9 become g-p).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|DELETE|/api/specialties/{specialtyId}|state|delete-specialty-unlinks-vets", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    The case deletes the specialty. Teardown deletes the vet, then lists the specialties and
+    deletes the one named "apitest-specialty-<case.id_short>" if it is still there. If teardown
+    reports a failure, use the run id (case.id_short in the report's residual data):
+    DELETE /api/vets/{id} for the vet whose last name is "Vet" plus the run id with digits mapped
+    to letters (0-9 -> g-p), then DELETE /api/specialties/{id} for the specialty named
+    "apitest-specialty-<run id>".
+  resources: [vets, specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+    - name: "setup: create a vet with that specialty"
+      request:
+        method: POST
+        path: /api/vets
+        body:
+          firstName: Apitest
+          lastName: "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+          specialties:
+            - name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        vet_id: "$.id"
+steps:
+  - name: the vet has the specialty before the delete
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        specialties: "@len 1"
+        specialties.0.id: "${ctx.specialty_id}"
+  - name: delete the specialty
+    request:
+      method: DELETE
+      path: "/api/specialties/${ctx.specialty_id}"
+  - name: the vet no longer lists the specialty
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.vet_id}"
+        specialties: []
+teardown:
+  steps:
+    - name: "teardown: delete the vet"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: specialties
+        field: name
+        prefix: "apitest-specialty-{run}"

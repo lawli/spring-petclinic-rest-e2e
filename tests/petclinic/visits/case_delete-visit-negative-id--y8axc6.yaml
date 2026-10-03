@@ -1,0 +1,104 @@
+schema: v1
+name: Delete with a negative visit id is a bad request and deletes no visit
+description: >-
+  visitId has minimum 0 (openapi.yml:1305) and the operation documents 400 (openapi.yml:1326-1331).
+  The request uses the negated id of a visit created for this run, so the case can also show that
+  the invalid id does not delete that visit. The exception handler maps only request-body
+  validation to 400 (ExceptionControllerAdvice.java:117, 80). Known defect, reproduced:
+  defects/invalid-request-values-not-answered-with-400.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|DELETE|/api/visits/{visitId}|validation|negative-id", variant: default}
+known_defects:
+  - ref: defects/invalid-request-values-not-answered-with-400.md
+    step: "delete using the negated visit id"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet (its visits go with it), then the owner, then the pet type, all created
+    by this run. If it fails, use the run id (case.id_short in the report's residual data), in this
+    order: DELETE /api/pets/{id} for the pet named "pet-<run id>", DELETE /api/owners/{id} for the
+    owner whose address starts with "apitest-<run id>", DELETE /api/pettypes/{id} for the type named
+    "apitest-type-<run id>".
+  resources: [visits, pets, owners, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+    - name: "setup: add a pet to the owner"
+      request:
+        method: POST
+        path: "/api/owners/${ctx.owner_id}/pets"
+        body:
+          name: "pet-${ctx.case.id_short}"
+          birthDate: "2020-01-15"
+          type:
+            id: "${ctx.type_id}"
+            name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        pet_id: "$.id"
+    - name: "setup: add a visit to the pet"
+      request:
+        method: POST
+        path: "/api/owners/${ctx.owner_id}/pets/${ctx.pet_id}/visits"
+        body:
+          date: "2024-03-10"
+          description: "apitest-${ctx.case.id_short} checkup"
+      extract:
+        visit_id: "$.id"
+steps:
+  - name: delete using the negated visit id
+    request:
+      method: DELETE
+      path: "/api/visits/-${ctx.visit_id}"
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+  - name: the visit with the positive id still exists
+    request:
+      method: GET
+      path: "/api/visits/${ctx.visit_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.visit_id}"
+teardown:
+  steps:
+    - name: "teardown: delete the pet"
+      request:
+        method: DELETE
+        path: "/api/pets/${ctx.pet_id}"
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

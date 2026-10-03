@@ -1,0 +1,88 @@
+schema: v1
+name: Get an owner by id returns the owner with its pets
+description: >-
+  Creates an owner with one pet and reads the owner by id. The Owner response must carry the stored
+  fields and a pets array (required, openapi.yml:2062-2063) holding that pet. The pet uses a pet
+  type created for this run, so no shared reference data is involved.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/owners/{ownerId}|happy|get-existing-owner", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet, then its owner, then the pet type, all created by this run. If it
+    fails, use the run id (case.id_short in the report's residual data), in this order:
+    DELETE /api/pets/{id} for the pet named "pet-<run id>", DELETE /api/owners/{id} for the owner
+    whose address starts with "apitest-<run id>", DELETE /api/pettypes/{id} for the type named
+    "apitest-type-<run id>".
+  resources: [pets, owners, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+    - name: "setup: add a pet to the owner"
+      request:
+        method: POST
+        path: "/api/owners/${ctx.owner_id}/pets"
+        body:
+          name: "pet-${ctx.case.id_short}"
+          birthDate: "2020-01-15"
+          type:
+            id: "${ctx.type_id}"
+            name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        pet_id: "$.id"
+steps:
+  - name: get the owner by id
+    request:
+      method: GET
+      path: "/api/owners/${ctx.owner_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.owner_id}"
+        firstName: Apitest
+        lastName: Owner
+        address: "apitest-${ctx.case.id_short} 1 Test Street"
+        city: Testville
+        telephone: "6085550100"
+        pets: "@len 1"
+        pets.0.id: "${ctx.pet_id}"
+        pets.0.name: "pet-${ctx.case.id_short}"
+        pets.0.birthDate: "2020-01-15"
+        pets.0.type.id: "${ctx.type_id}"
+        pets.0.ownerId: "${ctx.owner_id}"
+        pets.0.visits: []
+teardown:
+  steps:
+    - name: "teardown: delete the pet"
+      request:
+        method: DELETE
+        path: "/api/pets/${ctx.pet_id}"
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

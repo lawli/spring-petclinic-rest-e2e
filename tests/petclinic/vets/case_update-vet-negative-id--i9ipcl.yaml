@@ -1,0 +1,67 @@
+schema: v1
+name: Update with a negative vet id is a bad request and touches no vet
+description: >-
+  vetId has minimum 0 (openapi.yml:1748) and the operation documents 400 (openapi.yml:1776-1781).
+  The request uses the negated id of a vet created for this run, so the case can also show that
+  the invalid id does not reach that vet. The exception handler maps only request-body validation
+  to 400 (ExceptionControllerAdvice.java:117, 80). Known defect, reproduced:
+  defects/invalid-request-values-not-answered-with-400.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/vets/{vetId}|validation|negative-id", variant: default}
+known_defects:
+  - ref: defects/invalid-request-values-not-answered-with-400.md
+    step: "update using the negated vet id"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the vet created by this run. If it fails, find the vet whose last name is
+    "Vet" plus the run id with digits mapped to letters (0-9 -> g-p) in GET /api/vets (the id is
+    also in the report's residual data) and DELETE /api/vets/{id}.
+  resources: [vets]
+setup:
+  steps:
+    - name: "setup: create a vet owned by this run"
+      request:
+        method: POST
+        path: /api/vets
+        body:
+          firstName: Apitest
+          lastName: &last "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+          specialties: []
+      extract:
+        vet_id: "$.id"
+steps:
+  - name: update using the negated vet id
+    request:
+      method: PUT
+      path: "/api/vets/-${ctx.vet_id}"
+      body:
+        firstName: Updated
+        lastName: *last
+        specialties: []
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+  - name: the vet with the positive id keeps its first name
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        firstName: Apitest
+teardown:
+  steps:
+    - name: "teardown: delete the vet"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"

@@ -1,0 +1,51 @@
+schema: v1
+name: Owner page without parameters uses page 0 and size 20
+description: >-
+  Creates one owner so the result cannot be empty and requests the owner page without parameters.
+  page defaults to 0 and size to 20 (openapi.yml:162, 173), and the OwnerPage carries content,
+  page, size, totalElements and totalPages (all required, openapi.yml:2103-2108).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/v2/owners|pagination|default-page-and-size", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the owner created by this run. If it fails, find the owner whose address starts
+    with "apitest-<case.id_short>" in GET /api/owners (the id is also in the report's residual data)
+    and DELETE /api/owners/{id}.
+  resources: [owners]
+setup:
+  steps:
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+steps:
+  - name: get the owner page without parameters
+    request:
+      method: GET
+      path: /api/v2/owners
+    assert:
+      status: 200
+      json:
+        page: 0
+        size: 20
+        content: "@len >= 1"
+        content.0.id: "@type integer"
+        totalElements: "@number >= 1"
+        totalPages: "@number >= 1"
+teardown:
+  steps:
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"

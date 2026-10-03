@@ -1,0 +1,52 @@
+schema: v1
+name: Update a pet type returns the updated type
+description: >-
+  Creates a pet type and renames it. The contract documents 200 with the updated PetType in the
+  body (openapi.yml:748-758). The controller answers 204 without a body
+  (PetTypeRestControllerV1.java:90). Known defect, reproduced:
+  defects/update-answers-204-instead-of-200.md. The body carries the id, which PetType requires
+  (openapi.yml:2336-2337).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/pettypes/{petTypeId}|happy|update-pet-type", variant: default}
+known_defects:
+  - ref: defects/update-answers-204-instead-of-200.md
+    step: "rename the pet type"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet type created by this run. If it fails, find the type named
+    "apitest-type-<case.id_short>" or "apitest-renamed-<case.id_short>" in GET /api/pettypes (the
+    id is also in the report's residual data) and DELETE /api/pettypes/{id}.
+  resources: [pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+steps:
+  - name: rename the pet type
+    request:
+      method: PUT
+      path: "/api/pettypes/${ctx.type_id}"
+      body:
+        id: "${ctx.type_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.type_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

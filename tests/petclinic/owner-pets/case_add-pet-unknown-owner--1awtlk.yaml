@@ -1,0 +1,59 @@
+schema: v1
+name: Add a pet to an owner that does not exist returns 404
+description: >-
+  Posts a valid pet for owner 0. The id passes the parameter minimum (openapi.yml:377) but no owner
+  can have it, because ids are generated identities starting at 1. The answer is 404 "Pet or Owner
+  not found" with a ProblemDetail (openapi.yml:399-404). The controller returns 404 without a body
+  (OwnerRestControllerV1.java:143-145). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/owners/{ownerId}/pets|error|unknown-owner", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "add a pet to owner 0"
+    at: json.status
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet type created by this run, which also removes any pet of that type the
+    request may have stored against the contract. If it fails, DELETE /api/pettypes/{id} for the
+    type named "apitest-type-<case.id_short>".
+  resources: [pets, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+steps:
+  - name: add a pet to owner 0
+    request:
+      method: POST
+      path: /api/owners/0/pets
+      body:
+        name: "pet-${ctx.case.id_short}"
+        birthDate: "2020-01-15"
+        type:
+          id: "${ctx.type_id}"
+          name: "apitest-type-${ctx.case.id_short}"
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

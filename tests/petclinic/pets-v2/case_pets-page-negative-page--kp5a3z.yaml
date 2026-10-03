@@ -1,0 +1,31 @@
+schema: v1
+name: Pet page with a negative page index is a bad request
+description: >-
+  Read-only. page has minimum 0 (openapi.yml:887) and the operation documents 400 with a
+  ProblemDetail (openapi.yml:913-918), so page -1 must be answered with 400. The exception handler
+  maps only request-body validation to 400 (ExceptionControllerAdvice.java:117, 80). Known
+  defect, reproduced: defects/invalid-request-values-not-answered-with-400.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/v2/pets|validation|page-negative", variant: default}
+known_defects:
+  - ref: defects/invalid-request-values-not-answered-with-400.md
+    step: "get pet page -1"
+    at: status
+steps:
+  - name: get pet page -1
+    request:
+      method: GET
+      path: /api/v2/pets
+      params:
+        page: -1
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"

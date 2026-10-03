@@ -1,0 +1,21 @@
+schema: v1
+name: The actuator health route reports UP
+description: >-
+  Pending expectation, read-only. The readme names /actuator/health as a health check route
+  (readme.md:35-36) without saying what it returns. This case records the answer the Spring Boot
+  actuator dependency (pom.xml:58) gives for a healthy service: 200 with status "UP". It needs a
+  documented health contract (status code and body for healthy and unhealthy states).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/actuator/health|happy|health-reports-up", variant: default}
+expectation: pending
+steps:
+  - name: get the health route
+    request:
+      method: GET
+      path: /actuator/health
+    assert:
+      status: 200
+      json:
+        status: UP

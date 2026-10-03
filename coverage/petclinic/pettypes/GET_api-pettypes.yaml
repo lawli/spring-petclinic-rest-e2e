@@ -1,0 +1,72 @@
+service: petclinic
+method: GET
+path: /api/pettypes
+conditions: []
+evidence:
+  - {file: src/main/resources/openapi.yml, line: 587, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+    line: 39, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+    line: 53, kind: implementation}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|GET|/api/pettypes|happy|list-all-pet-types
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 594, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2322, kind: requirement}
+  - key: petclinic|GET|/api/pettypes|state|empty-collection
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: gap
+    expectation: confirmed
+    reason: >-
+      Needs a collection with no entries, which cannot be arranged in a shared environment without deleting records
+      this suite does not own. The expected answer is also open: the contract documents only 200 with an array,
+      while the controller answers 404 with an empty body when the collection is empty.
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 594, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 604, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 56, kind: implementation}
+  - key: petclinic|GET|/api/pettypes|state|conditional-get-not-modified
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: gap
+    expectation: confirmed
+    reason: >-
+      The contract documents 304 Not modified and an optional ETag response header, but the source configures no
+      ETag generation or conditional-request handling, so no validator can be obtained to build the precondition,
+      and the contract does not say which request must be answered with 304.
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 607, kind: requirement}
+  - key: petclinic|GET|/api/pettypes|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}
+  - key: petclinic|GET|/api/pettypes|auth|missing-role-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 51, kind: declarative}
+      - {file: readme.md, line: 231, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}

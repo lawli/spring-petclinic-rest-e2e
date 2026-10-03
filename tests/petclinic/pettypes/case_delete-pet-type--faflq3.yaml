@@ -1,0 +1,50 @@
+schema: v1
+name: Delete a pet type returns the deleted type
+description: >-
+  Creates a pet type that no pet uses and deletes it. The contract documents 200 with the PetType
+  in the body (openapi.yml:801-811). The controller answers 204 without a body
+  (PetTypeRestControllerV1.java:102). Known defect, reproduced:
+  defects/delete-answers-204-instead-of-200.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|DELETE|/api/pettypes/{petTypeId}|happy|delete-pet-type", variant: default}
+known_defects:
+  - ref: defects/delete-answers-204-instead-of-200.md
+    step: "delete the pet type"
+    at: status
+data:
+  isolated: true
+  cleanup: >-
+    The case itself deletes the pet type created by this run; teardown repeats the delete and
+    expects 404. If teardown reports a failure, find the type named "apitest-type-<case.id_short>"
+    in GET /api/pettypes and DELETE /api/pettypes/{id}.
+  resources: [pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+steps:
+  - name: delete the pet type
+    request:
+      method: DELETE
+      path: "/api/pettypes/${ctx.type_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.type_id}"
+        name: "apitest-type-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the pet type if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"
+      assert:
+        status: 404

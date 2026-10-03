@@ -1,0 +1,45 @@
+schema: v1
+name: List specialties returns the collection including a new specialty
+description: >-
+  Creates a specialty and lists all specialties. The answer is 200 with an array of Specialty
+  objects (openapi.yml:1352-1364), each with id and name (openapi.yml:1968-1990), and the new
+  specialty is one of them. Seed specialties are read, never changed.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/specialties|happy|list-all-specialties", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the specialty created by this run. If it fails, find the specialty named
+    "apitest-specialty-<case.id_short>" in GET /api/specialties (the id is also in the report's
+    residual data) and DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+steps:
+  - name: list all specialties
+    request:
+      method: GET
+      path: /api/specialties
+    assert:
+      status: 200
+      json:
+        "$": >-
+          @contains {"id": ${ctx.specialty_id}, "name": "apitest-specialty-${ctx.case.id_short}"}
+        0.id: "@type integer"
+        0.name: "@type string"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"

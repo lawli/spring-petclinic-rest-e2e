@@ -1,0 +1,58 @@
+schema: v1
+name: Update a pet type with an empty name is rejected and changes nothing
+description: >-
+  A pet type name needs at least one character (openapi.yml:2318). An update with an empty name
+  must be answered with 400 and a ProblemDetail listing a schema validation error
+  (openapi.yml:766-771), and the stored type must keep its name.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/pettypes/{petTypeId}|validation|name-empty", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet type created by this run. If it fails, find the type named
+    "apitest-type-<case.id_short>" in GET /api/pettypes (the id is also in the report's residual
+    data) and DELETE /api/pettypes/{id}.
+  resources: [pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+steps:
+  - name: update the pet type with an empty name
+    request:
+      method: PUT
+      path: "/api/pettypes/${ctx.type_id}"
+      body:
+        id: "${ctx.type_id}"
+        name: ""
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"
+  - name: the pet type keeps its name
+    request:
+      method: GET
+      path: "/api/pettypes/${ctx.type_id}"
+    assert:
+      status: 200
+      json:
+        name: "apitest-type-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

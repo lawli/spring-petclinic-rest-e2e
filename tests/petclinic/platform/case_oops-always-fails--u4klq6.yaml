@@ -1,0 +1,30 @@
+schema: v1
+name: The oops operation always answers with a bad-request ProblemDetail
+description: >-
+  Read-only. The contract defines GET /oops as an operation that "Always fails" and "Produces
+  sample error response" (openapi.yml:33-39): its 200 response is "Never returned"
+  (openapi.yml:41-42), and the error it documents is 400 with a ProblemDetail (openapi.yml:59-64).
+  No controller in the source implements this operation, so the request has no handler. Known
+  defect, reproduced: defects/oops-operation-not-implemented.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/oops|error|always-fails-with-problem-detail", variant: default}
+known_defects:
+  - ref: defects/oops-operation-not-implemented.md
+    step: "call the oops operation"
+    at: status
+steps:
+  - name: call the oops operation
+    request:
+      method: GET
+      path: /api/oops
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"

@@ -1,0 +1,22 @@
+schema: v1
+name: The root path redirects to the Swagger UI
+description: >-
+  Pending expectation, read-only. The readme says the application can be reached at its root URL
+  (readme.md:33) but not what that URL returns. The root controller sends a redirect to
+  "/swagger-ui/index.html" under the context path (RootRestControllerV1.java:41-44). This case
+  records that implemented answer: a 302 whose Location ends with that path. It needs a documented
+  statement of what the root URL serves.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/|happy|redirects-to-swagger-ui", variant: default}
+expectation: pending
+steps:
+  - name: get the root path without following redirects
+    request:
+      method: GET
+      path: /
+    assert:
+      status: 302
+      headers:
+        Location: '@regex /\/swagger-ui\/index\.html$/'

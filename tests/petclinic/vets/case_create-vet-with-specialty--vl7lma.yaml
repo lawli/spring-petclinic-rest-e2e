@@ -1,0 +1,75 @@
+schema: v1
+name: Create a vet with an existing specialty links that specialty
+description: >-
+  Creates a specialty, then posts a vet whose specialties list names it (VetFields.specialties,
+  openapi.yml:2233-2238). The stored Vet must list that specialty with its id, in the create
+  response and when read back. The create step checks the returned Vet but not the status, because
+  the status of a successful create is disputed separately
+  (defects/create-answers-201-instead-of-200.md). The specialty is given by name only: its id is
+  read-only (openapi.yml:1980), and the controller resolves specialties by name
+  (VetRestControllerV1.java:82).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/vets|happy|create-vet-with-existing-specialty", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the specialty created by this run, then lists the vets and deletes each one
+    whose last name starts with "Vet" plus the run id with digits mapped to letters (0-9 -> g-p).
+    If it fails, do the same by hand: DELETE /api/specialties/{id} for the specialty named
+    "apitest-specialty-<case.id_short>", then GET /api/vets and DELETE /api/vets/{id} for every
+    match.
+  resources: [vets, specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+steps:
+  - name: create a vet with the specialty
+    request:
+      method: POST
+      path: /api/vets
+      body:
+        firstName: Apitest
+        lastName: &last "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+        specialties:
+          - name: "apitest-specialty-${ctx.case.id_short}"
+    extract:
+      vet_id: "$.id"
+    assert:
+      json:
+        id: "@number >= 0"
+        lastName: *last
+        specialties: "@len 1"
+        specialties.0.id: "${ctx.specialty_id}"
+        specialties.0.name: "apitest-specialty-${ctx.case.id_short}"
+  - name: read the vet back
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.vet_id}"
+        specialties: "@len 1"
+        specialties.0.id: "${ctx.specialty_id}"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: vets
+        field: lastName
+        prefix: "Vet{run_letters}"

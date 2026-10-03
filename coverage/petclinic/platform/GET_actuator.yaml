@@ -1,0 +1,19 @@
+service: petclinic
+method: GET
+path: /actuator
+conditions: []
+evidence:
+  - {file: pom.xml, line: 58, kind: route}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|GET|/actuator|happy|exposed-actuator-endpoints
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: gap
+    expectation: confirmed
+    reason: >-
+      Discovery gap. Spring Boot Actuator registers its web endpoints at runtime from the starter's defaults; the
+      repository sets no management.* property, so which endpoints besides the documented /actuator/health are exposed
+      cannot be derived from source.
+    evidence:
+      - {file: pom.xml, line: 58, kind: route}
+      - {file: readme.md, line: 35, kind: requirement}

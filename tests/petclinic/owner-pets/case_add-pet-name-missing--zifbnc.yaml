@@ -1,0 +1,78 @@
+schema: v1
+name: Add a pet without a name is rejected
+description: >-
+  name is required in PetFields (openapi.yml:2174-2175). A body without it must be answered with 400
+  and a ProblemDetail listing a schema validation error (openapi.yml:393-398), and the owner must
+  still have no pets.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/owners/{ownerId}/pets|validation|name-missing", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet type first, which also removes any pet of that type the request may
+    have stored against the contract, then the owner. If it fails, use the run id (case.id_short
+    in the report's residual data): DELETE /api/pettypes/{id} for the type named
+    "apitest-type-<run id>", then DELETE /api/owners/{id} for the owner whose address starts with
+    "apitest-<run id>".
+  resources: [pets, owners, pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+steps:
+  - name: add a pet without a name
+    request:
+      method: POST
+      path: "/api/owners/${ctx.owner_id}/pets"
+      body:
+        birthDate: "2020-01-15"
+        type:
+          id: "${ctx.type_id}"
+          name: "apitest-type-${ctx.case.id_short}"
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"
+  - name: the owner still has no pets
+    request:
+      method: GET
+      path: "/api/owners/${ctx.owner_id}"
+    assert:
+      status: 200
+      json:
+        pets: []
+teardown:
+  steps:
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"

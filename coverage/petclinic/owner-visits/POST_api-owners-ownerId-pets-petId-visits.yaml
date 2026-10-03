@@ -1,0 +1,141 @@
+service: petclinic
+method: POST
+path: /api/owners/{ownerId}/pets/{petId}/visits
+conditions: []
+evidence:
+  - {file: src/main/resources/openapi.yml, line: 529, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java, line: 53,
+    kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java, line: 177,
+    kind: implementation}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|happy|add-visit-to-pet
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 562, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2305, kind: requirement}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|boundary|date-omitted
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2281, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2282, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 562, kind: requirement}
+      - {file: src/main/resources/db/h2/schema.sql, line: 57, kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 97,
+        kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|boundary|description-max-length-255
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2279, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 562, kind: requirement}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|validation|description-missing
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2282, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 568, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|validation|description-empty
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2278, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 568, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|validation|description-over-max-length
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2279, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 568, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|validation|date-invalid-format
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2272, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 568, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 80,
+        kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|error|pet-of-another-owner
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 574, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 575, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java,
+        line: 177, kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|error|unknown-owner
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 574, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 575, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java,
+        line: 177, kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|error|unknown-pet
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 574, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 575, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 97,
+        kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|validation|negative-pet-id
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 552, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 568, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 80,
+        kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}
+  - key: petclinic|POST|/api/owners/{ownerId}/pets/{petId}/visits|auth|missing-role-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java,
+        line: 175, kind: declarative}
+      - {file: readme.md, line: 231, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}

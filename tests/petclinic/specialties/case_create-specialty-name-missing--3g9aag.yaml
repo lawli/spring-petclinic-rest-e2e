@@ -1,0 +1,28 @@
+schema: v1
+name: Create a specialty without a name is rejected
+description: >-
+  name is required for a Specialty (openapi.yml:1988, 1990). An empty object must be answered with
+  400 and a ProblemDetail listing a schema validation error (openapi.yml:1410-1415). Read-only by
+  contract: the body is rejected before the handler runs, and a specialty without a name cannot be
+  stored because specialties.name is NOT NULL (schema.sql:11). If a 2xx comes back, the response
+  body holds the id to remove with DELETE /api/specialties/{id}.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/specialties|validation|name-missing", variant: default}
+mutates: false
+steps:
+  - name: post a specialty without a name
+    request:
+      method: POST
+      path: /api/specialties
+      body: {}
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

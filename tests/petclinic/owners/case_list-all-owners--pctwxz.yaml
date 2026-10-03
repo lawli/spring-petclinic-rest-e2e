@@ -1,0 +1,52 @@
+schema: v1
+name: List owners returns the owner collection
+description: >-
+  Creates one owner so the collection cannot be empty, lists all owners and checks that the answer
+  is an array whose entries carry the Owner fields of the contract (openapi.yml:113, 2040).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/owners|happy|list-all-owners", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the owner created by this run. If it fails, find the owner whose address starts
+    with "apitest-<case.id_short>" in GET /api/owners (the id is also in the report's residual data)
+    and DELETE /api/owners/{id}.
+  resources: [owners]
+setup:
+  steps:
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+steps:
+  - name: list all owners
+    request:
+      method: GET
+      path: /api/owners
+    assert:
+      status: 200
+      json:
+        "$": "@len >= 1"
+        0.id: "@type integer"
+        0.firstName: "@type string"
+        0.lastName: "@type string"
+        0.address: "@type string"
+        0.city: "@type string"
+        0.telephone: "@type string"
+        0.pets: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"

@@ -1,0 +1,62 @@
+schema: v1
+name: An owner update is visible when the owner is read back
+description: >-
+  Creates an owner, updates every editable field and reads the owner back: the stored record must
+  show the new values ("Updates the pet owner record with the specified details", openapi.yml:265).
+  The update step asserts nothing so that this check does not depend on the disputed status of the
+  update response (defects/update-answers-204-instead-of-200.md).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/owners/{ownerId}|state|update-persists", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the owner created by this run. If it fails, find the owner whose address starts
+    with "apitest-<case.id_short>" in GET /api/owners (the id is also in the report's residual data)
+    and DELETE /api/owners/{id}.
+  resources: [owners]
+setup:
+  steps:
+    - name: "setup: create an owner owned by this run"
+      request:
+        method: POST
+        path: /api/owners
+        body:
+          firstName: Apitest
+          lastName: Owner
+          address: "apitest-${ctx.case.id_short} 1 Test Street"
+          city: Testville
+          telephone: "6085550100"
+      extract:
+        owner_id: "$.id"
+steps:
+  - name: update the owner
+    request:
+      method: PUT
+      path: "/api/owners/${ctx.owner_id}"
+      body:
+        firstName: Updated
+        lastName: Person
+        address: "apitest-${ctx.case.id_short} 2 Changed Avenue"
+        city: Newtown
+        telephone: "6085550199"
+  - name: read the owner back
+    request:
+      method: GET
+      path: "/api/owners/${ctx.owner_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.owner_id}"
+        firstName: Updated
+        lastName: Person
+        address: "apitest-${ctx.case.id_short} 2 Changed Avenue"
+        city: Newtown
+        telephone: "6085550199"
+teardown:
+  steps:
+    - name: "teardown: delete the owner"
+      request:
+        method: DELETE
+        path: "/api/owners/${ctx.owner_id}"

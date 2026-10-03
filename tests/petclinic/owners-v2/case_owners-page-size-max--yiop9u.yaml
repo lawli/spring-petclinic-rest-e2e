@@ -1,0 +1,24 @@
+schema: v1
+name: Owner page with the largest size is accepted
+description: >-
+  Read-only. size has maximum 100 (openapi.yml:172). A request for size 100 is on the boundary and
+  must be answered with 200, size 100 echoed and at most 100 owners in the content.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/v2/owners|boundary|size-max-100", variant: default}
+steps:
+  - name: get the owner page with size 100
+    request:
+      method: GET
+      path: /api/v2/owners
+      params:
+        size: 100
+    assert:
+      status: 200
+      json:
+        page: 0
+        size: 100
+        content: "@len <= 100"
+        totalElements: "@number >= 0"
+        totalPages: "@number >= 0"

@@ -1,0 +1,51 @@
+schema: v1
+name: List vets returns the collection including a new vet
+description: >-
+  Creates a vet and lists all vets. The answer is 200 with an array of Vet objects
+  (openapi.yml:1603-1615), each with id, first name, last name and specialties
+  (openapi.yml:2258-2262), and the new vet is one of them. Seed vets are read, never changed. Vet
+  names must match the contract's letters-only pattern, so the hex run id is mapped to letters
+  (0-9 become g-p).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/vets|happy|list-all-vets", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the vet created by this run. If it fails, find the vet whose last name is
+    "Vet" plus the run id with digits mapped to letters (0-9 -> g-p) in GET /api/vets (the id is
+    also in the report's residual data) and DELETE /api/vets/{id}.
+  resources: [vets]
+setup:
+  steps:
+    - name: "setup: create a vet owned by this run"
+      request:
+        method: POST
+        path: /api/vets
+        body:
+          firstName: Apitest
+          lastName: "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+          specialties: []
+      extract:
+        vet_id: "$.id"
+steps:
+  - name: list all vets
+    request:
+      method: GET
+      path: /api/vets
+    assert:
+      status: 200
+      json:
+        "$": >-
+          @contains {"id": ${ctx.vet_id}, "firstName": "Apitest", "lastName": "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}", "specialties": []}
+        0.id: "@type integer"
+        0.firstName: "@type string"
+        0.lastName: "@type string"
+        0.specialties: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the vet"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"

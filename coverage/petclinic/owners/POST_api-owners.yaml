@@ -1,0 +1,121 @@
+service: petclinic
+method: POST
+path: /api/owners
+conditions: []
+evidence:
+  - {file: src/main/resources/openapi.yml, line: 66, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java, line: 53,
+    kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java, line: 101,
+    kind: implementation}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|POST|/api/owners|happy|create-owner
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 80, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2034, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2040, kind: requirement}
+  - key: petclinic|POST|/api/owners|boundary|first-name-max-length-30
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2001, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 80, kind: requirement}
+  - key: petclinic|POST|/api/owners|boundary|last-name-separator-and-trailing-period
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2010, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 80, kind: requirement}
+  - key: petclinic|POST|/api/owners|boundary|telephone-max-length-20
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2031, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2032, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 80, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/model/Owner.java, line: 49, kind: declarative}
+  - key: petclinic|POST|/api/owners|validation|first-name-missing
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2035, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 86, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners|validation|first-name-with-digit
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2002, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 86, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners|validation|first-name-over-max-length
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2001, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 86, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners|validation|address-empty
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2016, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 86, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners|validation|telephone-non-digit
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2032, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 86, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners|validation|telephone-over-max-length
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2031, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 86, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|POST|/api/owners|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}
+  - key: petclinic|POST|/api/owners|auth|missing-role-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/OwnerRestControllerV1.java,
+        line: 99, kind: declarative}
+      - {file: readme.md, line: 231, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}

@@ -1,0 +1,92 @@
+service: petclinic
+method: PUT
+path: /api/pettypes/{petTypeId}
+conditions: []
+evidence:
+  - {file: src/main/resources/openapi.yml, line: 724, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+    line: 39, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+    line: 83, kind: implementation}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|happy|update-pet-type
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 748, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 758, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 90, kind: implementation}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|state|update-persists
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 728, kind: requirement}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|validation|name-empty
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2318, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 766, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|validation|body-id-missing
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2337, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 766, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|state|update-after-delete
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 772, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 86, kind: implementation}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|validation|negative-id
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 738, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 766, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 80,
+        kind: implementation}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}
+  - key: petclinic|PUT|/api/pettypes/{petTypeId}|auth|missing-role-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/PetTypeRestControllerV1.java,
+        line: 81, kind: declarative}
+      - {file: readme.md, line: 231, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}

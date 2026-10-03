@@ -1,0 +1,29 @@
+schema: v1
+name: Create a visit without a pet id is rejected
+description: >-
+  petId is required for a Visit (openapi.yml:2305, 2307). A body without it must be answered with
+  400 and a ProblemDetail listing a schema validation error (openapi.yml:1159-1164). Read-only by
+  contract and by schema: the body is rejected before the handler runs, and a visit without a pet
+  cannot be stored because visits.pet_id is NOT NULL (schema.sql:56).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/visits|validation|pet-id-missing", variant: default}
+mutates: false
+steps:
+  - name: create a visit without petId
+    request:
+      method: POST
+      path: /api/visits
+      body:
+        date: "2024-03-10"
+        description: "apitest-${ctx.case.id_short} checkup"
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

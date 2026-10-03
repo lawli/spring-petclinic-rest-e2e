@@ -1,0 +1,30 @@
+schema: v1
+name: Create a user without a username is rejected
+description: >-
+  username is the one required field of User (openapi.yml:2368-2369). A body without it must be
+  answered with 400 and a ProblemDetail listing a schema validation error (openapi.yml:1880-1885).
+  Read-only on two grounds, which matters because the API has no operation to delete a user: the
+  body is rejected before the handler runs, and it carries no roles, which the service refuses
+  before saving anything (UserServiceImpl.java:20-22).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/users|validation|username-missing", variant: default}
+mutates: false
+steps:
+  - name: post a user without username
+    request:
+      method: POST
+      path: /api/users
+      body:
+        password: pw-apitest
+        enabled: true
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

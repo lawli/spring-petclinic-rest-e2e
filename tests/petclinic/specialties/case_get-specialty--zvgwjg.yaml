@@ -1,0 +1,42 @@
+schema: v1
+name: Get a specialty by id returns the specialty
+description: >-
+  Creates a specialty and reads it by id. The answer is 200 with the Specialty
+  (openapi.yml:1446-1456): its id and name, both required (openapi.yml:1988-1990).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/specialties/{specialtyId}|happy|get-existing-specialty", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the specialty created by this run. If it fails, find the specialty named
+    "apitest-specialty-<case.id_short>" in GET /api/specialties (the id is also in the report's
+    residual data) and DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+steps:
+  - name: get the specialty by id
+    request:
+      method: GET
+      path: "/api/specialties/${ctx.specialty_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.specialty_id}"
+        name: "apitest-specialty-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"

@@ -1,0 +1,48 @@
+schema: v1
+name: Create a pet type with an 80-character name
+description: >-
+  A pet type name allows at most 80 characters (openapi.yml:2317). A name of exactly 80 characters
+  (the run marker padded with "x") is on the boundary and must be stored unchanged. The create
+  step checks the returned PetType but not the status, because the status of a successful create is
+  disputed separately (defects/create-answers-201-instead-of-200.md); the type is then read back by
+  id. Teardown deletes by the run's name marker, whether or not the create stored the type.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/pettypes|boundary|name-max-length-80", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown lists the pet types and deletes each one whose name starts with
+    "apitest-type-<case.id_short>". If it fails, do the same by hand: GET /api/pettypes, then
+    DELETE /api/pettypes/{id} for every match.
+  resources: [pettypes]
+steps:
+  - name: create a pet type whose name has 80 characters
+    request:
+      method: POST
+      path: /api/pettypes
+      body:
+        name: "apitest-type-${ctx.case.id_short}${'x' * 55}"
+    extract:
+      type_id: "$.id"
+    assert:
+      json:
+        id: "@number >= 0"
+        name: "apitest-type-${ctx.case.id_short}${'x' * 55}"
+  - name: read the pet type back
+    request:
+      method: GET
+      path: "/api/pettypes/${ctx.type_id}"
+    assert:
+      status: 200
+      json:
+        name: "apitest-type-${ctx.case.id_short}${'x' * 55}"
+teardown:
+  python:
+    - call: helpers.run_records.delete_marked
+      args:
+        service: petclinic
+        collection: pettypes
+        field: name
+        prefix: "apitest-type-{run}"

@@ -1,0 +1,49 @@
+schema: v1
+name: Get a vet after it was deleted returns 404
+description: >-
+  Creates a vet, deletes it in setup and reads it by id: a deleted vet is no longer found (404,
+  openapi.yml:1722). Only the status is checked here; the 404 body is covered by the id-zero case.
+  The setup delete carries no status assertion because its documented status is disputed
+  (defects/delete-answers-204-instead-of-200.md).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/vets/{vetId}|state|get-after-delete", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    The vet created by this run is deleted in setup; teardown repeats the delete and expects 404.
+    If teardown reports a failure, find the vet whose last name is "Vet" plus the run id with
+    digits mapped to letters (0-9 -> g-p) in GET /api/vets and DELETE /api/vets/{id}.
+  resources: [vets]
+setup:
+  steps:
+    - name: "setup: create a vet owned by this run"
+      request:
+        method: POST
+        path: /api/vets
+        body:
+          firstName: Apitest
+          lastName: "Vet${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+          specialties: []
+      extract:
+        vet_id: "$.id"
+    - name: "setup: delete the vet"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"
+steps:
+  - name: get the deleted vet
+    request:
+      method: GET
+      path: "/api/vets/${ctx.vet_id}"
+    assert:
+      status: 404
+teardown:
+  steps:
+    - name: "teardown: delete the vet if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/vets/${ctx.vet_id}"
+      assert:
+        status: 404

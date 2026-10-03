@@ -1,0 +1,61 @@
+schema: v1
+name: Update a specialty that was deleted returns 404
+description: >-
+  Creates a specialty, deletes it in setup and then sends a valid update for its id. The answer is
+  404 with a ProblemDetail (openapi.yml:1530-1535). The controller returns 404 without a body
+  (SpecialtyRestControllerV1.java:88-90). Known defect, reproduced:
+  defects/not-found-without-problem-detail.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/specialties/{specialtyId}|state|update-after-delete", variant: default}
+known_defects:
+  - ref: defects/not-found-without-problem-detail.md
+    step: "update the deleted specialty"
+    at: json.status
+data:
+  isolated: true
+  cleanup: >-
+    The specialty created by this run is deleted in setup; teardown repeats the delete and expects
+    404, which also catches an update that recreated the record. If teardown reports a failure,
+    find the specialty named "apitest-specialty-<case.id_short>" or
+    "apitest-renamed-<case.id_short>" in GET /api/specialties and DELETE /api/specialties/{id}.
+  resources: [specialties]
+setup:
+  steps:
+    - name: "setup: create a specialty owned by this run"
+      request:
+        method: POST
+        path: /api/specialties
+        body:
+          name: "apitest-specialty-${ctx.case.id_short}"
+      extract:
+        specialty_id: "$.id"
+    - name: "setup: delete the specialty"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"
+steps:
+  - name: update the deleted specialty
+    request:
+      method: PUT
+      path: "/api/specialties/${ctx.specialty_id}"
+      body:
+        name: "apitest-renamed-${ctx.case.id_short}"
+    assert:
+      status: 404
+      json:
+        status: 404
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"
+teardown:
+  steps:
+    - name: "teardown: delete the specialty if it is still there (404 once deleted)"
+      request:
+        method: DELETE
+        path: "/api/specialties/${ctx.specialty_id}"
+      assert:
+        status: 404

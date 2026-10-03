@@ -1,0 +1,30 @@
+schema: v1
+name: Create a visit with a negative pet id is rejected
+description: >-
+  petId has minimum 0 in the Visit schema (openapi.yml:2303). A body with petId -1 must be answered
+  with 400 and a ProblemDetail listing a schema validation error (openapi.yml:1159-1164). Read-only
+  by contract and by schema: the body is rejected before the handler runs, and no visit can be
+  stored for a pet that does not exist because of the pet foreign key (schema.sql:59).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|POST|/api/visits|validation|pet-id-negative", variant: default}
+mutates: false
+steps:
+  - name: create a visit for pet -1
+    request:
+      method: POST
+      path: /api/visits
+      body:
+        date: "2024-03-10"
+        description: "apitest-${ctx.case.id_short} checkup"
+        petId: -1
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors.0.message: "@type string"

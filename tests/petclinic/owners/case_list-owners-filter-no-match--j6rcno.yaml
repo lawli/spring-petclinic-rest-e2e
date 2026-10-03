@@ -1,0 +1,26 @@
+schema: v1
+name: List owners with a last name nobody has returns an empty array
+description: >-
+  Read-only. Filters by a run-unique last name that no owner carries. The contract documents only
+  200 with an array for this operation (openapi.yml:113-125) and no 404, so the answer is 200 with
+  an empty array. The controller answers 404 for an empty result (OwnerRestControllerV1.java:83-85).
+  Known defect, reproduced: defects/list-answers-404-for-empty-result.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/owners|error|filter-no-match", variant: default}
+known_defects:
+  - ref: defects/list-answers-404-for-empty-result.md
+    step: "list owners with a last name that does not exist"
+    at: status
+steps:
+  - name: list owners with a last name that does not exist
+    request:
+      method: GET
+      path: /api/owners
+      params:
+        lastName: "Zz${ctx.case.id_short|replace('0','g')|replace('1','h')|replace('2','i')|replace('3','j')|replace('4','k')|replace('5','l')|replace('6','m')|replace('7','n')|replace('8','o')|replace('9','p')}"
+    assert:
+      status: 200
+      json:
+        "$": []

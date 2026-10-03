@@ -1,0 +1,32 @@
+schema: v1
+name: Owner page with a non-numeric page index is a bad request
+description: >-
+  Read-only. page is declared as an integer (openapi.yml:159) and the operation documents 400 with
+  a ProblemDetail (openapi.yml:194-199), so "abc" must be answered with 400. A type mismatch is not
+  request-body validation, so it reaches the catch-all handler that answers 500
+  (ExceptionControllerAdvice.java:80). Known defect, reproduced:
+  defects/invalid-request-values-not-answered-with-400.md.
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|GET|/api/v2/owners|validation|page-non-numeric", variant: default}
+known_defects:
+  - ref: defects/invalid-request-values-not-answered-with-400.md
+    step: "get owner page \"abc\""
+    at: status
+steps:
+  - name: get owner page "abc"
+    request:
+      method: GET
+      path: /api/v2/owners
+      params:
+        page: abc
+    assert:
+      status: 400
+      json:
+        status: 400
+        title: "@type string"
+        detail: "@type string"
+        type: "@type string"
+        timestamp: "@iso8601"
+        schemaValidationErrors: "@type array"

@@ -1,0 +1,51 @@
+schema: v1
+name: A pet type update is visible when the type is read back
+description: >-
+  Creates a pet type, renames it and reads it back: the stored type must show the new name
+  (operation "Update a pet type by ID", openapi.yml:728). The update step asserts nothing so that
+  this check does not depend on the disputed status of the update response
+  (defects/update-answers-204-instead-of-200.md).
+service: petclinic
+source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+covers:
+  - {key: "petclinic|PUT|/api/pettypes/{petTypeId}|state|update-persists", variant: default}
+data:
+  isolated: true
+  cleanup: >-
+    Teardown deletes the pet type created by this run. If it fails, find the type named
+    "apitest-type-<case.id_short>" or "apitest-renamed-<case.id_short>" in GET /api/pettypes (the
+    id is also in the report's residual data) and DELETE /api/pettypes/{id}.
+  resources: [pettypes]
+setup:
+  steps:
+    - name: "setup: create a pet type owned by this run"
+      request:
+        method: POST
+        path: /api/pettypes
+        body:
+          name: "apitest-type-${ctx.case.id_short}"
+      extract:
+        type_id: "$.id"
+steps:
+  - name: rename the pet type
+    request:
+      method: PUT
+      path: "/api/pettypes/${ctx.type_id}"
+      body:
+        id: "${ctx.type_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+  - name: read the pet type back
+    request:
+      method: GET
+      path: "/api/pettypes/${ctx.type_id}"
+    assert:
+      status: 200
+      json:
+        id: "${ctx.type_id}"
+        name: "apitest-renamed-${ctx.case.id_short}"
+teardown:
+  steps:
+    - name: "teardown: delete the pet type"
+      request:
+        method: DELETE
+        path: "/api/pettypes/${ctx.type_id}"

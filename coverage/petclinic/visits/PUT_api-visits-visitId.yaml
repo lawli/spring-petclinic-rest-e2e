@@ -1,0 +1,104 @@
+service: petclinic
+method: PUT
+path: /api/visits/{visitId}
+conditions: []
+evidence:
+  - {file: src/main/resources/openapi.yml, line: 1231, kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/VisitRestControllerV1.java, line: 42,
+    kind: route}
+  - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/VisitRestControllerV1.java, line: 88,
+    kind: implementation}
+  - {file: src/main/resources/application.properties, line: 25, kind: route}
+rows:
+  - key: petclinic|PUT|/api/visits/{visitId}|happy|update-visit
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 1255, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1265, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/VisitRestControllerV1.java,
+        line: 96, kind: implementation}
+  - key: petclinic|PUT|/api/visits/{visitId}|state|update-persists
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 1235, kind: requirement}
+  - key: petclinic|PUT|/api/visits/{visitId}|validation|description-empty
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2278, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1273, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+  - key: petclinic|PUT|/api/visits/{visitId}|boundary|date-omitted
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2281, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 2282, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/VisitRestControllerV1.java,
+        line: 93, kind: implementation}
+      - {file: src/main/resources/db/h2/schema.sql, line: 57, kind: declarative}
+  - key: petclinic|PUT|/api/visits/{visitId}|validation|date-invalid-format
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 2272, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1273, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 80,
+        kind: implementation}
+  - key: petclinic|PUT|/api/visits/{visitId}|state|update-after-delete
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 1279, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/VisitRestControllerV1.java,
+        line: 91, kind: implementation}
+  - key: petclinic|PUT|/api/visits/{visitId}|validation|negative-id
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: authored
+    expectation: confirmed
+    evidence:
+      - {file: src/main/resources/openapi.yml, line: 1245, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1273, kind: requirement}
+      - {file: src/main/resources/openapi.yml, line: 1900, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java, line: 80,
+        kind: implementation}
+  - key: petclinic|PUT|/api/visits/{visitId}|auth|unauthenticated-request-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: readme.md, line: 230, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 39,
+        kind: implementation}
+  - key: petclinic|PUT|/api/visits/{visitId}|auth|missing-role-rejected
+    source_commit: 4cd8e1b0cd42578e882247d8801f6be5d402f118
+    status: blocked
+    expectation: confirmed
+    reason: >-
+      Blocked on user input. Authentication and role checks are active only when the service runs with petclinic.security.enable=true
+      (BasicAuthenticationConfig.java:20); the pinned reference sets it to false (application.properties:49) and
+      the local profile defines no role identities. Needed: (1) confirmation that the target runs with security
+      enabled, (2) one test identity per role, referenced from the profile as ${VARIABLE}.
+    evidence:
+      - {file: src/main/java/org/springframework/samples/petclinic/rest/controller/v1/VisitRestControllerV1.java,
+        line: 86, kind: declarative}
+      - {file: readme.md, line: 231, kind: requirement}
+      - {file: src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java, line: 20,
+        kind: declarative}
